@@ -4,8 +4,8 @@ import requests
 import validators
 import json
 
-VT_API_KEY = 'ffbb81a3b3a1937805f85ac9e181a050aea934c4c5f78a705fb110503da754bc'
-ABUSEIPDB_API_KEY = '6fda25db2df06fa2948a4d3484a6b6973f9445b999edadf0ba0428550c6b2e953437b35b40d14001'
+VT_API_KEY = 'Your Virus Total Apikey'
+ABUSEIPDB_API_KEY = 'Your AbuseIPDB Apikey'
 
 def scan_ip(ip):
     url = f'https://www.virustotal.com/api/v3/ip_addresses/{ip}'
