@@ -1,0 +1,6 @@
+#Requirements.txt
+argparse
+csv
+requests
+validators
+json
