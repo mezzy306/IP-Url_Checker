@@ -11,3 +11,5 @@ python ip_scanner.py --check-url //To use url mode<br />
 input file //contain path of file ip/url<br />
 output file //contain path and name of output file<br />
 
+Note : 
+Don't forget to insert Apikey
