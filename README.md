@@ -1,7 +1,8 @@
 # IP-Url_Checker
 This is Ip/Url checker using python based on api virustotal and abuseip <br />
 How To Install:<br />
-Just use git clone<br />
+git clone https://github.com/mezzy306/IP-Url_Checker.git <br />
+pip install -r requirements.txt
 
 How To Use:<br />
 python ip_scanner.py -h //To help<br />
