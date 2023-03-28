@@ -55,10 +55,6 @@ def check_abuseip(ip):
         return {'Score': score, 'Url' : url}
     else:
         return None
-    
-    
-
-
 
 def main():
     parser = argparse.ArgumentParser(description='Scan a list of IPs and URLs.')
