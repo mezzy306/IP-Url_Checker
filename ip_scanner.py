@@ -3,9 +3,10 @@ import csv
 import requests
 import validators
 import json
+from time import sleep
 
-VT_API_KEY = 'Your Virus Total Apikey'
-ABUSEIPDB_API_KEY = 'Your AbuseIPDB Apikey'
+VT_API_KEY = 'Your_VirusTotal_Key'
+ABUSEIPDB_API_KEY = 'Your_AbuseDb_Key'
 
 def scan_ip(ip):
     url = f'https://www.virustotal.com/api/v3/ip_addresses/{ip}'
@@ -16,25 +17,32 @@ def scan_ip(ip):
         json_dict = result['data']['attributes']['last_analysis_stats']
         malicious = json_dict['malicious']
         total = sum(json_dict.values())
+        permalink = result['data']['links']['self']
         print({ip},"malicious :",malicious,"Out of",total)
-        return {'Malicious': malicious, 'Total': total}
-        #return response.json()
+        return {'Malicious': malicious, 'Total': total, 'Permalink': permalink}
     else:
         return None
 
 def scan_url(url):
     if not validators.url(url):
         return None
-    params = {'apikey': VT_API_KEY, 'resource': url}
-    response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params=params)
-    if response.status_code == 200:
-        result = response.json()
-        malicious = result['positives']
-        total = result['total']
-        print(params['resource'],"malicious",malicious,"Out Of",total)
-        return {'Malicious': malicious, 'Total' : total}
-    else:
-        return None
+    url_scan_url = 'https://www.virustotal.com/api/v3/urls'
+    url_report_url = 'https://www.virustotal.com/api/v3/urls/'
+    headers = {
+        'x-apikey': VT_API_KEY
+    }
+    response = requests.post(url_scan_url, headers=headers, data={'url': url})
+    result = response.json()
+    resource_id = result['data']['id'].split('-')[1]
+    response = requests.get(url_report_url + resource_id, headers=headers)
+    analysis = response.json()['data']
+    sleep(4)
+    malicious = analysis['attributes']['last_analysis_stats']['malicious']
+    AllTotal = analysis['attributes']['last_analysis_stats']
+    total = sum(AllTotal.values())
+    permalink = analysis['links']['self']
+    print(url, "malicious", malicious, "out of", total)
+    return {'Malicious': malicious, 'Total': total, 'Permalink': permalink}
 
 
 def check_abuseip(ip):
@@ -42,10 +50,12 @@ def check_abuseip(ip):
     headers = {'Key': ABUSEIPDB_API_KEY, 'Accept': 'application/json'}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        
-        return response.json()
+        result = response.json()
+        score = result['data']['abuseConfidenceScore']
+        return {'Score': score, 'Url' : url}
     else:
         return None
+    
     
 
 
@@ -66,27 +76,28 @@ def main():
             if args.check_ip:
                 ip_result = scan_ip(line)
                 if ip_result:
-                    results.append({'IP/URL': line, 'VT Score': ip_result,'Total Scans': ip_result['Total']})
+                    results.append({'IP/URL': line, 'Malicious': ip_result['Malicious'],'Total': ip_result['Total'],'VTPermalink': ip_result['Permalink']})
                 if args.check_url:
                  url_result = scan_url(line)
                 if url_result:
-                    results.append({'IP/URL': line, 'VT Score': url_result['Malicious'], 'Total Scans': url_result['Total']})
+                    results.append({'IP/URL': line, 'Malicious': url_result['Malicious'], 'Total': url_result['Total'],'VTPermalink': ip_result['Permalink']})
             else:
                 url_result = scan_url(line)
                 if url_result:
-                    results.append({'IP/URL': line, 'VT Score': url_result, 'AbuseIPDB Score': None})
+                    results.append({'IP/URL': line, 'Malicious': url_result['Malicious'],'Total': url_result['Total'],'VTPermalink': url_result['Permalink'],'AbuseIPDB Score': None ,'ABPermalink' : None})
             if args.check_ip:
                 abuseip_result = check_abuseip(line)
                 if abuseip_result:
                     for result in results:
                         if result['IP/URL'] == line:
-                            result['AbuseIPDB Score'] = abuseip_result['data']['abuseConfidenceScore']
+                            result['AbuseIPDB Score'] = abuseip_result['Score']
+                            result['ABPermalink'] = abuseip_result['Url']
 
     with open(args.output_file, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['IP/URL', 'VT Score', 'AbuseIPDB Score'])
+        writer.writerow(['IP/URL', 'Malicious','Total', 'AbuseIPDB Score','VTPermalink','ABPermalink'])
         for result in results:
-            writer.writerow([result['IP/URL'], result['VT Score'], result['AbuseIPDB Score']])
+                writer.writerow([result['IP/URL'], result['Malicious'],result['Total'], result['AbuseIPDB Score'],result['VTPermalink'],result['ABPermalink']])
 
 if __name__ == '__main__':
     main()
